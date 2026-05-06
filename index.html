@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RAN Ticket Matcher</title>
+  <meta
+    name="description"
+    content="RAN Ticket Matcher membantu mencocokkan Site ID, RAN Cell Report, Incident Ticket, dan Current Alarm dalam satu output Excel."
+  />
+  <link rel="icon" href="assets/icon.png" />
+  <style>
+    :root {
+      --ink: #151c2d;
+      --muted: #59677d;
+      --line: #dbe4ef;
+      --paper: #f8fafc;
+      --panel: #eef4f9;
+      --green: #0f766e;
+      --green-strong: #0b5f59;
+      --blue: #1f4e78;
+      --orange: #c95d18;
+      --shadow: 0 22px 70px rgba(21, 28, 45, .16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #fbfdff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    a { color: inherit; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 14px clamp(18px, 4vw, 56px);
+      background: rgba(251, 253, 255, .92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(219, 228, 239, .8);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      font-weight: 800;
+      letter-spacing: .01em;
+      text-decoration: none;
+    }
+
+    .brand img {
+      width: 34px;
+      height: 34px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .nav a {
+      text-decoration: none;
+    }
+
+    .hero {
+      position: relative;
+      min-height: calc(100svh - 64px);
+      display: grid;
+      align-items: center;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(248, 250, 252, .97) 0%, rgba(248, 250, 252, .91) 38%, rgba(248, 250, 252, .28) 74%),
+        url("panduan/manual_assets/03_output_preview.png") right center / min(980px, 72vw) auto no-repeat,
+        linear-gradient(135deg, #f8fafc 0%, #edf4f8 100%);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 26%;
+      background: linear-gradient(180deg, rgba(251, 253, 255, 0), #fbfdff 82%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 66px 0 86px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 28px;
+      height: 2px;
+      background: var(--green);
+    }
+
+    h1 {
+      max-width: 680px;
+      margin: 18px 0 16px;
+      font-size: clamp(44px, 7vw, 88px);
+      line-height: .98;
+      letter-spacing: 0;
+    }
+
+    .hero-copy {
+      max-width: 610px;
+      margin: 0 0 28px;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 21px);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+      border-radius: 7px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 760;
+      box-shadow: 0 1px 0 rgba(21, 28, 45, .04);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      border-color: #b7c6d8;
+    }
+
+    .button.primary {
+      background: var(--green);
+      border-color: var(--green);
+      color: #f7fbfb;
+    }
+
+    .button.primary:hover {
+      background: var(--green-strong);
+    }
+
+    .button.support {
+      border-color: #f0bd92;
+      color: #9b4613;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+
+    section {
+      padding: 72px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      color: var(--blue);
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .section-lead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      margin-top: 34px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .feature {
+      padding: 24px 22px 26px;
+      border-right: 1px solid var(--line);
+    }
+
+    .feature:last-child { border-right: 0; }
+
+    .feature strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 17px;
+    }
+
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 38px;
+      align-items: center;
+    }
+
+    .screen {
+      display: block;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    .steps {
+      margin: 28px 0 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: step;
+      border-top: 1px solid var(--line);
+    }
+
+    .steps li {
+      counter-increment: step;
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 14px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .steps li::before {
+      content: counter(step);
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #f7fbff;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .steps strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+
+    .output-band {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      align-items: start;
+      padding: 30px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .output-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .output-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(31, 78, 120, .16);
+      color: var(--muted);
+    }
+
+    .output-list li:last-child { border-bottom: 0; }
+    .output-list strong { color: var(--ink); }
+
+    .final {
+      text-align: center;
+      border-bottom: 0;
+    }
+
+    .final p {
+      margin: 0 auto 24px;
+      max-width: 650px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    footer {
+      padding: 28px clamp(18px, 4vw, 56px);
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      background: #f3f7fb;
+      font-size: 14px;
+    }
+
+    @media (max-width: 860px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      .hero {
+        background:
+          linear-gradient(180deg, rgba(248, 250, 252, .98) 0%, rgba(248, 250, 252, .96) 58%, rgba(248, 250, 252, .55) 100%),
+          url("panduan/manual_assets/03_output_preview.png") center bottom / 880px auto no-repeat,
+          linear-gradient(135deg, #f8fafc 0%, #edf4f8 100%);
+      }
+
+      .hero-inner {
+        padding-top: 46px;
+        padding-bottom: 330px;
+      }
+
+      .feature-list,
+      .workflow,
+      .output-band {
+        grid-template-columns: 1fr;
+      }
+
+      .feature {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .feature:last-child { border-bottom: 0; }
+    }
+
+    @media (max-width: 520px) {
+      .actions,
+      .button {
+        width: 100%;
+      }
+
+      .hero-inner {
+        padding-bottom: 260px;
+      }
+
+      .output-band {
+        padding: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="https://hfhafan.github.io/RAN-Ticket-Matcher/">
+      <img src="assets/icon.png" alt="" />
+      <span>RAN Ticket Matcher</span>
+    </a>
+    <nav class="nav" aria-label="Navigasi utama">
+      <a href="#tujuan">Tujuan</a>
+      <a href="#alur">Alur Kerja</a>
+      <a href="#output">Output</a>
+      <a href="panduan/">Panduan Detail</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <span class="eyebrow">Windows desktop tool</span>
+      <h1>RAN Ticket Matcher</h1>
+      <p class="hero-copy">
+        Cek Site ID, NE, current alarm, dan incident ticket dalam satu proses. Hasil akhir berupa Excel yang rapi untuk follow up operasional.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/hfhafan/RAN-Ticket-Matcher/releases/latest">Download App</a>
+        <a class="button" href="panduan/">Panduan Detail</a>
+        <a class="button support" href="https://saweria.co/HDfauzan">Traktir Kopi</a>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section id="tujuan">
+      <h2>Dibuat untuk pengecekan Site ID yang lebih cepat.</h2>
+      <p class="section-lead">
+        Aplikasi ini membantu tim membaca hubungan antara RAN Cell Report, Incident Ticket, dan Current Alarm tanpa perlu menyusun lookup manual berulang di Excel.
+      </p>
+      <div class="feature-list" aria-label="Fitur utama">
+        <div class="feature">
+          <strong>Multi NE per Site ID</strong>
+          <p>Satu Site ID bisa punya lebih dari satu NE. Semua kandidat tetap disimpan agar ticket tidak salah dipasangkan.</p>
+        </div>
+        <div class="feature">
+          <strong>Match title ticket</strong>
+          <p>Title incident dicocokkan ke NE, termasuk suffix pendek seperti NE_4G atau NE_A sebelum tanda titik dua.</p>
+        </div>
+        <div class="feature">
+          <strong>Current alarm fleksibel</strong>
+          <p>Sumber current alarm bisa URL CSV atau file lokal, dengan mapping kolom yang bisa disesuaikan.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="alur">
+      <div class="workflow">
+        <div>
+          <h2>Alur kerja ringkas.</h2>
+          <p class="section-lead">
+            Pilih folder report, pilih file ticket, masukkan sumber current alarm, lalu jalankan matcher.
+          </p>
+          <ol class="steps">
+            <li><span><strong>Masukkan Site ID.</strong> Bisa satu per baris atau dipisah koma.</span></li>
+            <li><span><strong>Pilih data input.</strong> RAN report folder, Incident Ticket, Current Alarm, dan output folder.</span></li>
+            <li><span><strong>Review Excel hasil.</strong> Sheet output membantu melihat alarm yang sudah atau belum punya ticket.</span></li>
+          </ol>
+        </div>
+        <img class="screen" src="panduan/manual_assets/02_inputs_filled.png" alt="Tampilan input RAN Ticket Matcher" />
+      </div>
+    </section>
+
+    <section id="output">
+      <div class="output-band">
+        <div>
+          <h2>Output yang langsung bisa dipakai.</h2>
+          <p class="section-lead">
+            Workbook hasil dibuat dengan sheet terpisah agar tim bisa membaca kandidat NE, ticket match, current alarm, dan status pengecekan.
+          </p>
+        </div>
+        <ul class="output-list">
+          <li><strong>NE_Candidates</strong><span>Site ID, RAT, NE Name</span></li>
+          <li><strong>Output</strong><span>Ticket yang match dengan NE</span></li>
+          <li><strong>Current Alarm</strong><span>Alarm aktif yang relevan</span></li>
+          <li><strong>Current Alarm Ticket Check</strong><span>Alarm aktif ada ticket atau belum</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="final">
+      <h2>Mulai dari release terbaru.</h2>
+      <p>
+        Download installer Windows dari halaman Releases, lalu buka panduan detail jika butuh contoh penggunaan dan cara membaca hasil Excel.
+      </p>
+      <div class="actions" style="justify-content: center;">
+        <a class="button primary" href="https://github.com/hfhafan/RAN-Ticket-Matcher/releases/latest">Download App</a>
+        <a class="button" href="panduan/">Buka Panduan Detail</a>
+        <a class="button support" href="https://saweria.co/HDfauzan">Traktir Kopi</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Developer: hadifauzanhanif@gmail.com
+  </footer>
+</body>
+</html>
