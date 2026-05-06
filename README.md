@@ -4,7 +4,7 @@ Public release channel for RAN Ticket Matcher.
 
 Use the Releases page to download installers and check version updates.
 
-Panduan penggunaan: [PANDUAN_PENGGUNA.md](PANDUAN_PENGGUNA.md)
+Panduan penggunaan: https://hfhafan.github.io/RAN-Ticket-Matcher/panduan/
 
 Developer: hadifauzanhanif@gmail.com
 Support: https://saweria.co/HDfauzan
